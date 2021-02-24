@@ -1,18 +1,25 @@
+%Loading the data
 data=readtable('./bidmc_csv/bidmc_05_Signals.csv');
 ppg_raw=data(:,3);
 ppg_raw=ppg_raw.PLETH;
 time=data(:,1);
 t=time.Time_s_;
 
+%Path to the file containing true values
 path_truth='./bidmc_csv/bidmc_05_Numerics.csv'
 
+%Function to calculate ground truth
 [RR_windows,del_rows]=comp_ground_truth(path_truth)
+%Preprocessing of raw PPG data
 [y_riiv, y_riav, y_rifv,t1]=preprocessing(ppg_raw,t);
+%Generating sliding windows
 [temp_riiv,temp_riav,temp_rifv]=sliding_windows(y_riiv, y_riav, y_rifv,t1,del_rows);
+%Computing AR density
 [RR_computed,y,u,o]=AR_density(temp_riiv,temp_riav,temp_rifv)
-
+%Plotting the predicted against ground truth and calculating the MAE
 [MAE,diff]=evaluation(RR_windows,RR_computed);
-writematrix(diff,'05.csv') 
+%Saving the MAEs
+%writematrix(diff,'05.csv') 
 
 function [y_riiv, y_riav, y_rifv,t1]=preprocessing(ppg_raw,t);
 
@@ -80,7 +87,7 @@ for i=1:length(peaks);
 %         y_rifv_raw(i,1)=y(peaks(i+1))-y(onsets(i));
     end
 end
-%Resampling the signals at Fs=4Hz using linear interpolation
+%Resampling the signals at Fs=8Hz using linear interpolation
 Fs_r=8;
 tp=tp(1:length(y_riav_raw),:);
 [y_riiv,t1]=resample(y_riiv_raw,tp,Fs_r,'linear');
